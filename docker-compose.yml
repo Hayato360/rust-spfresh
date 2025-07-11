@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rust-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    environment:
+      - RUST_LOG=info
+
+  frontend-simple:
+    image: nginx:alpine
+    container_name: simple-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend-simple:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+  # Leptos frontend (advanced, requires building)
+  # frontend:
+  #   build: 
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: leptos-frontend
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - BACKEND_URL=http://backend:8000
+  #   depends_on:
+  #     - backend

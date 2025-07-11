@@ -1,0 +1,8 @@
+# Sample reviews for testing
+# Each line is a valid JSON object representing a review
+
+{"id":"1","review_title":"Excellent smartphone","review_body":"This phone has amazing battery life and the camera quality is outstanding. I can easily get through a full day of heavy usage.","product_id":"PHONE-001","review_rating":5,"timestamp":"2025-01-01T10:00:00Z"}
+{"id":"2","review_title":"Decent laptop for work","review_body":"Good performance for office tasks and video calls. The keyboard is comfortable but the screen could be brighter.","product_id":"LAPTOP-002","review_rating":4,"timestamp":"2025-01-01T11:00:00Z"}
+{"id":"3","review_title":"Poor quality headphones","review_body":"Sound quality is disappointing and build feels cheap. Not worth the price point.","product_id":"HEADPHONE-003","review_rating":2,"timestamp":"2025-01-01T12:00:00Z"}
+{"id":"4","review_title":"Amazing camera features","review_body":"The night mode is incredible and photo quality is professional grade. Perfect for photography enthusiasts.","product_id":"PHONE-001","review_rating":5,"timestamp":"2025-01-01T13:00:00Z"}
+{"id":"5","review_title":"Good value for money","review_body":"Solid performance and reliable build quality. Great choice for students and professionals alike.","product_id":"LAPTOP-002","review_rating":4,"timestamp":"2025-01-01T14:00:00Z"}
