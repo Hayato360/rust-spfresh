@@ -6,7 +6,7 @@ echo.
 echo This will start both servers automatically!
 echo.
 echo 1. Backend: http://localhost:8000
-echo 2. Frontend: http://127.0.0.1:8080
+echo 2. Frontend: http://127.0.0.1:3000
 echo.
 echo Press any key to start...
 pause >nul
@@ -24,7 +24,7 @@ echo ========================================
 echo  SERVERS STARTED!
 echo ========================================
 echo Backend:  http://localhost:8000
-echo Frontend: http://127.0.0.1:8080
+echo Frontend: http://127.0.0.1:3000
 echo.
 echo Both servers are running in separate windows.
 echo Close those windows to stop the servers.
