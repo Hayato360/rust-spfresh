@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde_json;
 use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Write, Read};
 use std::path::Path;
 use uuid::Uuid;
 
@@ -29,11 +29,18 @@ impl VectorStore {
 
     async fn load_existing_data(&mut self) -> Result<()> {
         let metadata_path = format!("{}/reviews.jsonl", self.data_dir);
+        let vector_path = format!("{}/reviews.index", self.data_dir);
         
         if !Path::new(&metadata_path).exists() {
             return Ok(());
         }
 
+        // Load vectors from binary file if exists
+        if Path::new(&vector_path).exists() {
+            self.load_vectors_from_file(&vector_path).await?;
+        }
+
+        // Load metadata from JSONL
         let file = File::open(&metadata_path)?;
         let reader = BufReader::new(file);
 
@@ -43,16 +50,23 @@ impl VectorStore {
                 let review: Review = serde_json::from_str(&line)
                     .context("Failed to deserialize review from JSONL")?;
                 
-                // Generate simple TF-IDF style embedding for existing review
-                let text_to_embed = format!("{} {}", review.review_title, review.review_body);
-                let embedding = self.create_simple_embedding(&text_to_embed);
-                
-                self.vectors.push(embedding);
                 self.reviews.push(review);
             }
         }
 
-        tracing::info!("Loaded {} existing reviews", self.reviews.len());
+        // If no vector file exists but we have reviews, generate vectors
+        if self.vectors.is_empty() && !self.reviews.is_empty() {
+            tracing::warn!("Vector file not found, regenerating vectors from text");
+            for review in &self.reviews {
+                let text_to_embed = format!("{} {}", review.review_title, review.review_body);
+                let embedding = self.create_simple_embedding(&text_to_embed);
+                self.vectors.push(embedding);
+            }
+            // Save the regenerated vectors
+            self.save_all_vectors_to_file().await?;
+        }
+
+        tracing::info!("Loaded {} existing reviews with {} vectors", self.reviews.len(), self.vectors.len());
         Ok(())
     }
 
@@ -72,16 +86,16 @@ impl VectorStore {
         let embedding = self.create_simple_embedding(&text_to_embed);
 
         // Append to in-memory storage
-        self.vectors.push(embedding);
+        self.vectors.push(embedding.clone());
         self.reviews.push(review.clone());
 
-        // Append to file storage
-        self.append_to_storage(&review).await?;
+        // Append to file storage (both metadata and vector)
+        self.append_to_storage(&review, &embedding).await?;
 
         Ok(review)
     }
 
-    async fn append_to_storage(&self, review: &Review) -> Result<()> {
+    async fn append_to_storage(&self, review: &Review, embedding: &Vec<f32>) -> Result<()> {
         // Ensure data directory exists
         std::fs::create_dir_all(&self.data_dir)?;
 
@@ -94,6 +108,9 @@ impl VectorStore {
         
         let json_line = serde_json::to_string(review)?;
         writeln!(file, "{}", json_line)?;
+
+        // Append vector to binary index file
+        self.append_vector_to_file(embedding).await?;
 
         Ok(())
     }
@@ -175,6 +192,81 @@ impl VectorStore {
         }
 
         embedding
+    }
+
+    // Vector file management functions
+    async fn append_vector_to_file(&self, embedding: &Vec<f32>) -> Result<()> {
+        let vector_path = format!("{}/reviews.index", self.data_dir);
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(vector_path)?;
+
+        // Write vector dimension first (as u32)
+        let dim = embedding.len() as u32;
+        file.write_all(&dim.to_le_bytes())?;
+        
+        // Write vector components
+        for &value in embedding {
+            file.write_all(&value.to_le_bytes())?;
+        }
+        
+        file.flush()?;
+        Ok(())
+    }
+
+    async fn load_vectors_from_file(&mut self, vector_path: &str) -> Result<()> {
+        let mut file = File::open(vector_path)?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+        
+        let mut cursor = 0;
+        
+        while cursor + 4 <= buffer.len() {
+            // Read dimension
+            let dim_bytes = &buffer[cursor..cursor + 4];
+            let dim = u32::from_le_bytes([dim_bytes[0], dim_bytes[1], dim_bytes[2], dim_bytes[3]]) as usize;
+            cursor += 4;
+            
+            // Check if we have enough bytes for the vector
+            if cursor + (dim * 4) > buffer.len() {
+                break;
+            }
+            
+            // Read vector components
+            let mut vector = Vec::with_capacity(dim);
+            for _ in 0..dim {
+                let value_bytes = &buffer[cursor..cursor + 4];
+                let value = f32::from_le_bytes([value_bytes[0], value_bytes[1], value_bytes[2], value_bytes[3]]);
+                vector.push(value);
+                cursor += 4;
+            }
+            
+            self.vectors.push(vector);
+        }
+        
+        tracing::info!("Loaded {} vectors from file", self.vectors.len());
+        Ok(())
+    }
+
+    async fn save_all_vectors_to_file(&self) -> Result<()> {
+        let vector_path = format!("{}/reviews.index", self.data_dir);
+        let mut file = File::create(vector_path)?;
+        
+        for vector in &self.vectors {
+            // Write vector dimension first (as u32)
+            let dim = vector.len() as u32;
+            file.write_all(&dim.to_le_bytes())?;
+            
+            // Write vector components
+            for &value in vector {
+                file.write_all(&value.to_le_bytes())?;
+            }
+        }
+        
+        file.flush()?;
+        tracing::info!("Saved {} vectors to file", self.vectors.len());
+        Ok(())
     }
 }
 

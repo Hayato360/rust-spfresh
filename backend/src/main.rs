@@ -22,7 +22,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
+    
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
