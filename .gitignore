@@ -47,3 +47,6 @@ pids
 *.tmp
 *.temp
 backend/nul
+
+# Rust-specific
+SPfresh-main/

@@ -158,15 +158,92 @@ impl VectorStore {
             .split_whitespace()
             .collect();
 
-        // Create a simple bag-of-words embedding with predefined vocabulary
-        let vocabulary = vec![
-            "good", "great", "excellent", "amazing", "wonderful", "fantastic", "love", "perfect", "best",
-            "bad", "poor", "terrible", "awful", "hate", "worst", "horrible", "disappointing",
-            "battery", "camera", "screen", "quality", "performance", "price", "value", "design",
-            "phone", "laptop", "headphones", "device", "product", "build", "sound", "fast", "slow",
-            "cheap", "expensive", "comfortable", "easy", "difficult", "heavy", "light", "durable",
-            "recommend", "buy", "purchase", "money", "worth", "satisfied", "happy", "pleased"
+        // Create structured vocabulary with clear categories
+        let positive_words = vec![
+            "good", "great", "excellent", "amazing", "wonderful", "fantastic", 
+            "love", "perfect", "best", "awesome", "outstanding", "superb", 
+            "brilliant", "magnificent", "exceptional", "marvelous", "incredible", 
+            "remarkable", "impressive", "stunning", "fabulous", "terrific",
+            "gorgeous", "beautiful", "lovely", "nice", "pleasant", "enjoyable",
+            "delightful", "charming", "attractive", "appealing", "desirable",
+            "superior", "premium", "top", "first-class", "high-quality", "fine",
+            "phenomenal", "friendly", "informal", "helpful", "patient", "knowledgeable",
+            "attentive", "cool", "staggering", "veritable", "affordable", "local"
         ];
+        
+        let negative_words = vec![
+            "bad", "poor", "terrible", "awful", "hate", "worst", 
+            "horrible", "disappointing", "useless", "pathetic", "disgusting",
+            "dreadful", "appalling", "shocking", "disastrous", "catastrophic",
+            "horrendous", "atrocious", "abysmal", "deplorable", "miserable",
+            "inferior", "substandard", "defective", "faulty", "broken",
+            "worthless", "garbage", "trash", "junk", "rubbish", "cheap",
+            "flimsy", "fragile", "unreliable", "unstable", "problematic",
+            "suspicious", "overly", "silly", "newbie"
+        ];
+        
+        let product_features = vec![
+            "battery", "camera", "screen", "quality", "performance", "price", 
+            "value", "design", "build", "sound", "display", "keyboard",
+            "trackpad", "speaker", "microphone", "processor", "memory", "storage",
+            "graphics", "wifi", "bluetooth", "charging", "weight", "size",
+            "color", "material", "texture", "finish", "durability", "reliability",
+            "compatibility", "connectivity", "ports", "buttons", "interface",
+            "software", "hardware", "specs", "features", "functionality",
+            "selection", "inventory", "condition", "shape", "deposit", "reservation",
+            "service", "solution", "balance", "maneuverability", "stability", "tracking",
+            "efficiency", "exercise", "safety", "transportation"
+        ];
+        
+        let product_types = vec![
+            "phone", "laptop", "headphones", "device", "product", "smartphone",
+            "tablet", "computer", "monitor", "keyboard", "mouse", "speaker",
+            "earbuds", "charger", "cable", "case", "cover", "accessory",
+            "gadget", "electronics", "technology", "machine", "equipment",
+            "tool", "item", "gear", "apparatus", "instrument", "skis", "boats",
+            "jet", "runners", "wave", "kayak", "canoe", "paddleboard", "paddle",
+            "watercraft", "trailer", "anchor", "jackets", "life", "hitch",
+            "ties", "showroom", "building", "store", "shop", "channel", "lake",
+            "river", "water", "outdoor", "camping", "balms", "lights", "solar"
+        ];
+        
+        let descriptive_words = vec![
+            "fast", "slow", "cheap", "expensive", "comfortable", "easy", 
+            "difficult", "heavy", "light", "durable", "portable", "compact",
+            "large", "small", "thin", "thick", "wide", "narrow", "long",
+            "short", "smooth", "rough", "soft", "hard", "flexible", "rigid",
+            "bright", "dark", "loud", "quiet", "sharp", "blunt", "clear",
+            "blurry", "responsive", "laggy", "intuitive", "confusing", "simple",
+            "complex", "modern", "outdated", "sleek", "bulky", "elegant",
+            "decent", "older", "local", "nice", "informal", "suspicious", "flat",
+            "stocked", "rafters", "huge", "fooled", "sized", "numerous", "extensive",
+            "patient", "friendly", "quick", "ready", "happy", "silly", "little"
+        ];
+        
+        let action_words = vec![
+            "recommend", "buy", "purchase", "money", "worth", "satisfied", 
+            "happy", "pleased", "disappointed", "regret", "return", "refund",
+            "exchange", "upgrade", "downgrade", "install", "uninstall", "use",
+            "try", "test", "compare", "review", "rate", "evaluate", "judge",
+            "consider", "choose", "select", "prefer", "like", "dislike",
+            "enjoy", "appreciate", "criticize", "complain", "praise", "blame",
+            "rent", "rented", "found", "watch", "worked", "left", "plan", "using",
+            "supply", "supplied", "back", "definitely", "picked", "brought", "threw",
+            "include", "included", "drive", "giving", "chance", "gauge", "sing",
+            "praises", "looking", "forward", "visit", "answer", "questions", "help",
+            "walk", "want", "own", "owned", "listened", "recommended", "ended",
+            "picking", "purchased", "opportunities", "paddle", "paddling", "exercise",
+            "shop", "shopping", "hesitate", "stocking", "stuffers"
+        ];
+
+        // Combine all vocabularies
+        let mut vocabulary: Vec<&str> = Vec::new();
+        vocabulary.extend(&positive_words);
+        vocabulary.extend(&negative_words);
+        vocabulary.extend(&product_features);
+        vocabulary.extend(&product_types);
+        vocabulary.extend(&descriptive_words);
+        vocabulary.extend(&action_words);
 
         let mut embedding = vec![0.0; vocabulary.len()];
         
