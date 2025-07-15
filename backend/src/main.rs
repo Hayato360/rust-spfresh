@@ -1,12 +1,17 @@
+mod fastembed_service;
 mod handlers;
 mod models;
 mod vector_store;
+
+#[cfg(test)]
+mod tests;
 
 use anyhow::Result;
 use clap::Parser;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use fastembed_service::FastEmbedService;
 use handlers::{create_router, AppState};
 use vector_store::VectorStore;
 
@@ -30,8 +35,11 @@ async fn main() -> Result<()> {
     tracing::info!("Starting Review Search Backend on port {}", args.port);
     tracing::info!("Data directory: {}", args.data_dir);
 
-    // Initialize vector store
-    let vector_store = VectorStore::new(&args.data_dir).await?;
+    // Initialize FastEmbed service
+    let fastembed_service = FastEmbedService::new()?;
+
+    // Initialize vector store with FastEmbed service
+    let vector_store = VectorStore::new(&args.data_dir, fastembed_service).await?;
     let app_state: AppState = Arc::new(Mutex::new(vector_store));
 
     // Create router

@@ -5,20 +5,23 @@ use std::io::{BufRead, BufReader, Write, Read};
 use std::path::Path;
 use uuid::Uuid;
 
+use crate::fastembed_service::FastEmbedService;
 use crate::models::{Review, InsertReviewRequest};
 
 pub struct VectorStore {
     data_dir: String,
     vectors: Vec<Vec<f32>>,
     reviews: Vec<Review>,
+    fastembed_service: FastEmbedService,
 }
 
 impl VectorStore {
-    pub async fn new(data_dir: &str) -> Result<Self> {
+    pub async fn new(data_dir: &str, fastembed_service: FastEmbedService) -> Result<Self> {
         let mut store = Self {
             data_dir: data_dir.to_string(),
             vectors: Vec::new(),
             reviews: Vec::new(),
+            fastembed_service,
         };
 
         // Load existing data if any
@@ -56,10 +59,10 @@ impl VectorStore {
 
         // If no vector file exists but we have reviews, generate vectors
         if self.vectors.is_empty() && !self.reviews.is_empty() {
-            tracing::warn!("Vector file not found, regenerating vectors from text");
+            tracing::warn!("Vector file not found, regenerating vectors from text using FastEmbed");
             for review in &self.reviews {
                 let text_to_embed = format!("{} {}", review.review_title, review.review_body);
-                let embedding = self.create_simple_embedding(&text_to_embed);
+                let embedding = self.create_fastembed_embedding(&text_to_embed)?;
                 self.vectors.push(embedding);
             }
             // Save the regenerated vectors
@@ -81,9 +84,9 @@ impl VectorStore {
             timestamp: chrono::Utc::now().to_rfc3339(),
         };
 
-        // Generate simple embedding
+        // Generate FastEmbed embedding
         let text_to_embed = format!("{} {}", request.review_title, request.review_body);
-        let embedding = self.create_simple_embedding(&text_to_embed);
+        let embedding = self.create_fastembed_embedding(&text_to_embed)?;
 
         // Append to in-memory storage
         self.vectors.push(embedding.clone());
@@ -120,8 +123,8 @@ impl VectorStore {
             return Ok(Vec::new());
         }
 
-        // Generate embedding for query
-        let query_vector = self.create_simple_embedding(query);
+        // Generate FastEmbed embedding for query
+        let query_vector = self.create_fastembed_embedding(query)?;
 
         // Calculate cosine similarities
         let mut similarities: Vec<(usize, f32)> = self.vectors
@@ -150,8 +153,14 @@ impl VectorStore {
         (self.reviews.len(), self.vectors.len())
     }
 
-    // Simple TF-IDF style embedding (for demonstration)
+    // FastEmbed-based embedding generation
+    fn create_fastembed_embedding(&self, text: &str) -> Result<Vec<f32>> {
+        self.fastembed_service.embed_text(text)
+    }
+
+    // Legacy simple TF-IDF style embedding (kept for backward compatibility)
     // In production, you'd use a proper embedding model
+    #[allow(dead_code)]
     fn create_simple_embedding(&self, text: &str) -> Vec<f32> {
         let lowercase_text = text.to_lowercase();
         let words: Vec<&str> = lowercase_text
