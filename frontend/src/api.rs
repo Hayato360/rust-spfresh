@@ -3,7 +3,7 @@ use serde_json;
 
 use crate::models::{ApiResponse, InsertReviewRequest, Review, SearchRequest, SearchResponse};
 
-const BASE_URL: &str = "http://localhost:8000";
+const BASE_URL: &str = "";
 
 pub async fn insert_review(request: InsertReviewRequest) -> Result<Review, String> {
     let response = Request::post(&format!("{}/reviews", BASE_URL))
