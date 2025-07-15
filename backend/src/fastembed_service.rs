@@ -6,6 +6,7 @@ pub struct FastEmbedService {
     model: Arc<Mutex<TextEmbedding>>,
 }
 
+//LOL
 impl FastEmbedService {
     pub fn new() -> Result<Self> {
         tracing::info!("Initializing FastEmbed service...");
