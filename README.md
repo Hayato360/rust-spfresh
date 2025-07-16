@@ -11,8 +11,8 @@ A semantic search system for product reviews built with Rust, featuring:
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend       │    │   File Storage  │
-│   (Leptos)      │───▶│   (axum +       │───▶│   reviews.jsonl │
-│                 │    │   fastembed-rs) │    │   reviews.index │
+│   (Leptos)      │───▶│   (axum +       │───▶│   reviews.jsonl  │
+│                 │    │   fastembed-rs) │    │   reviews.index (SPfresh)│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
