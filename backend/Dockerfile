@@ -37,11 +37,18 @@ WORKDIR /app
 # Copy SPFresh source
 COPY SPFresh-main ./SPFresh-main/
 
-# Build SPFresh C API
+# Build SPFresh C API with persistent binary index support
 RUN cd SPFresh-main && \
     ls -la && \
     chmod +x build_docker.sh && \
-    ./build_docker.sh && \
+    # Use persistent wrapper for binary index support
+    if [ -f "persistent_spfresh_wrapper.cpp" ]; then \
+        echo "Using persistent SPFresh wrapper for binary index"; \
+        g++-9 -shared -fPIC -o libspfresh_c_api.so persistent_spfresh_wrapper.cpp -ljemalloc -lpthread; \
+    else \
+        echo "Falling back to simple wrapper (no binary index)"; \
+        ./build_docker.sh; \
+    fi && \
     ls -la && \
     cp libspfresh_c_api.so /usr/local/lib/ && \
     ldconfig
