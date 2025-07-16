@@ -38,7 +38,7 @@ impl VectorStore {
             return Ok(());
         }
 
-        // Load vectors from binary file if exists
+        // Load vectors from binary file if exists .
         if Path::new(&vector_path).exists() {
             self.load_vectors_from_file(&vector_path).await?;
         }
