@@ -16,10 +16,10 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Set working directory
 WORKDIR /app
 
-# Copy backend files
-COPY backend/Cargo.toml backend/Cargo.lock ./
-COPY backend/src ./src/
-COPY backend/data ./data/
+# Copy backend files (paths adjusted since Dockerfile is now in backend dir)
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src/
+COPY data ./data/
 
 # Build the application
 RUN cargo build --release
