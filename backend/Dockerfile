@@ -39,8 +39,10 @@ COPY SPFresh-main ./SPFresh-main/
 
 # Build SPFresh C API
 RUN cd SPFresh-main && \
+    ls -la && \
     chmod +x build_docker.sh && \
     ./build_docker.sh && \
+    ls -la && \
     cp libspfresh_c_api.so /usr/local/lib/ && \
     ldconfig
 

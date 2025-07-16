@@ -1,5 +1,6 @@
 # Rust build artifacts
 target/
+backend/target2/
 **/*.rs.bk
 # Cargo.lock
 
@@ -35,9 +36,10 @@ pids
 *.seed
 *.pid.lock
 
-# Optional: Keep sample data or exclude it
-# backend/data/
-# Uncomment above line if you want to exclude data files
+# Data files (exclude for production)
+backend/data/*.jsonl
+backend/data/*.index
+backend/data/*.db
 
 # WASM artifacts
 *.wasm
