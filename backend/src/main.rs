@@ -1,6 +1,8 @@
 mod fastembed_service;
 mod handlers;
 mod models;
+mod spfresh_bindings;
+mod spfresh_vector_store;
 mod vector_store;
 
 #[cfg(test)]
@@ -13,7 +15,7 @@ use tokio::sync::Mutex;
 
 use fastembed_service::FastEmbedService;
 use handlers::{create_router, AppState};
-use vector_store::VectorStore;
+use spfresh_vector_store::SPFreshVectorStore;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -38,8 +40,8 @@ async fn main() -> Result<()> {
     // Initialize FastEmbed service
     let fastembed_service = FastEmbedService::new()?;
 
-    // Initialize vector store with FastEmbed service
-    let vector_store = VectorStore::new(&args.data_dir, fastembed_service).await?;
+    // Initialize SPFresh vector store with FastEmbed service
+    let vector_store = SPFreshVectorStore::new(&args.data_dir, fastembed_service).await?;
     let app_state: AppState = Arc::new(Mutex::new(vector_store));
 
     // Create router

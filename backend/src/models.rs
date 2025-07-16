@@ -26,8 +26,8 @@ pub struct SearchRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchResponse {
-    pub reviews: Vec<ReviewWithScore>,
-    pub total_found: usize,
+    pub reviews: Vec<Review>,
+    pub total_count: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,6 +49,14 @@ impl<T> ApiResponse<T> {
             success: true,
             data: Some(data),
             error: None,
+        }
+    }
+    
+    pub fn error(message: String) -> Self {
+        Self {
+            success: false,
+            data: None,
+            error: Some(message),
         }
     }
 }

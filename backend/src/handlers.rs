@@ -10,11 +10,11 @@ use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
 use crate::models::{
-    ApiResponse, InsertReviewRequest, ReviewWithScore, SearchRequest, SearchResponse,
+    ApiResponse, InsertReviewRequest, SearchRequest, SearchResponse,
 };
-use crate::vector_store::VectorStore;
+use crate::spfresh_vector_store::SPFreshVectorStore;
 
-pub type AppState = Arc<Mutex<VectorStore>>;
+pub type AppState = Arc<Mutex<SPFreshVectorStore>>;
 
 pub fn create_router(store: AppState) -> Router {
     Router::new()
@@ -31,17 +31,20 @@ async fn health_check() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success("Service is healthy".to_string()))
 }
 
-async fn get_stats(State(store): State<AppState>) -> Json<ApiResponse<(usize, usize)>> {
+async fn get_stats(State(store): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let store = store.lock().await;
-    let stats = store.get_stats();
-    Json(ApiResponse::success(stats))
+    let stats = store.get_stats().await;
+    Json(ApiResponse::success(serde_json::json!({
+        "review_count": stats.0,
+        "vector_count": stats.1
+    })))
 }
 
 async fn insert_review(
     State(store): State<AppState>,
     Json(request): Json<InsertReviewRequest>,
 ) -> Result<Json<ApiResponse<crate::models::Review>>, StatusCode> {
-    let mut store = store.lock().await;
+    let store = store.lock().await;
     
     match store.insert_review(request).await {
         Ok(review) => Ok(Json(ApiResponse::success(review))),
@@ -56,7 +59,7 @@ async fn insert_reviews_bulk(
     State(store): State<AppState>,
     Json(requests): Json<Vec<InsertReviewRequest>>,
 ) -> Result<Json<ApiResponse<Vec<crate::models::Review>>>, StatusCode> {
-    let mut store = store.lock().await;
+    let store = store.lock().await;
     let mut inserted_reviews = Vec::new();
 
     for request in requests {
@@ -77,23 +80,19 @@ async fn search_reviews(
     Json(request): Json<SearchRequest>,
 ) -> Result<Json<ApiResponse<SearchResponse>>, StatusCode> {
     let store = store.lock().await;
-    let limit = request.limit.unwrap_or(10);
 
-    match store.search(&request.query, limit).await {
+    match store.search(&request.query, request.limit.unwrap_or(10)).await {
         Ok(results) => {
-            let reviews_with_scores: Vec<ReviewWithScore> = results
-                .into_iter()
-                .map(|(review, score)| ReviewWithScore {
-                    review,
-                    similarity_score: score,
-                })
+            let total_count = results.len();
+            let reviews = results.into_iter()
+                .map(|(review, _score)| review)
                 .collect();
-
+            
             let response = SearchResponse {
-                total_found: reviews_with_scores.len(),
-                reviews: reviews_with_scores,
+                reviews,
+                total_count,
             };
-
+            
             Ok(Json(ApiResponse::success(response)))
         }
         Err(e) => {

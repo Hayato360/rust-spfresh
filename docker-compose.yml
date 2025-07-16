@@ -2,15 +2,16 @@ version: "3.9"
 services:
   backend:
     build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: rust-backend
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: rust-spfresh-backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend/data:/app/data
     environment:
       - RUST_LOG=info
+      - LD_LIBRARY_PATH=/app/SPFresh-main/build_c_api:/usr/local/lib:/usr/lib/x86_64-linux-gnu
 
   frontend:
     build: 

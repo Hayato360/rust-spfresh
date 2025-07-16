@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 3.10)
+project(spfresh_c_api)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find required packages
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JEMALLOC REQUIRED jemalloc)
+
+# Set the SPFresh root directory
+set(SPFRESH_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Include directories
+include_directories(${SPFRESH_ROOT})
+include_directories(${SPFRESH_ROOT}/AnnService/inc)
+include_directories(${SPFRESH_ROOT}/ThirdParty)
+
+# Find all source files for SPFresh
+file(GLOB_RECURSE SPFRESH_SOURCES 
+    "${SPFRESH_ROOT}/AnnService/src/*.cpp"
+    "${SPFRESH_ROOT}/AnnService/src/*.cc"
+)
+
+# Remove files that might cause conflicts
+list(FILTER SPFRESH_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
+list(FILTER SPFRESH_SOURCES EXCLUDE REGEX ".*Main\\.cpp$")
+
+# Create the shared library
+add_library(spfresh_c_api SHARED 
+    spfresh_c_api.cpp
+    ${SPFRESH_SOURCES}
+)
+
+# Link libraries
+target_link_libraries(spfresh_c_api 
+    ${JEMALLOC_LIBRARIES}
+    pthread
+    dl
+)
+
+# Compiler flags
+target_compile_options(spfresh_c_api PRIVATE 
+    ${JEMALLOC_CFLAGS}
+    -fPIC
+    -O3
+    -march=native
+    -DUSE_JEMALLOC
+)
+
+# Install targets
+install(TARGETS spfresh_c_api
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+install(FILES spfresh_c_api.h
+    DESTINATION include
+)

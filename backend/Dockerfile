@@ -1,12 +1,30 @@
-# Use Ubuntu base image for better compatibility with FastEmbed-rs
+# Use Ubuntu base image for better compatibility with FastEmbed-rs and SPFresh
 FROM ubuntu:22.04
 
-# Install dependencies
+# Install dependencies for building SPFresh and Rust
 RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     pkg-config \
     libssl-dev \
+    cmake \
+    libjemalloc-dev \
+    libsnappy-dev \
+    libgflags-dev \
+    libboost-all-dev \
+    libtbb-dev \
+    libgoogle-perftools-dev \
+    gcc-9 \
+    g++-9 \
+    git \
+    swig \
+    libboost-serialization-dev \
+    libboost-thread-dev \
+    libboost-system-dev \
+    libboost-filesystem-dev \
+    libboost-regex-dev \
+    libboost-program-options-dev \
+    libisal-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust
@@ -16,10 +34,23 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Set working directory
 WORKDIR /app
 
-# Copy backend files (paths adjusted since Dockerfile is now in backend dir)
-COPY Cargo.toml Cargo.lock ./
-COPY src ./src/
-COPY data ./data/
+# Copy SPFresh source
+COPY SPFresh-main ./SPFresh-main/
+
+# Build SPFresh C API
+RUN cd SPFresh-main && \
+    chmod +x build_docker.sh && \
+    ./build_docker.sh && \
+    cp libspfresh_c_api.so /usr/local/lib/ && \
+    ldconfig
+
+# Copy backend files
+COPY backend/Cargo.toml backend/Cargo.lock backend/build.rs ./
+COPY backend/src ./src/
+COPY backend/data ./data/
+
+# Set library path for building
+ENV LD_LIBRARY_PATH="/app/SPFresh-main/build_c_api:/usr/local/lib:/usr/lib/x86_64-linux-gnu"
 
 # Build the application
 RUN cargo build --release
