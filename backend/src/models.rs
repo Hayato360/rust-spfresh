@@ -26,8 +26,8 @@ pub struct SearchRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchResponse {
-    pub reviews: Vec<Review>,
-    pub total_count: usize,
+    pub reviews: Vec<ReviewWithScore>,
+    pub total_found: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
 use crate::models::{
-    ApiResponse, InsertReviewRequest, SearchRequest, SearchResponse,
+    ApiResponse, InsertReviewRequest, SearchRequest, SearchResponse, ReviewWithScore,
 };
 use crate::spfresh_vector_store::SPFreshVectorStore;
 
@@ -31,13 +31,10 @@ async fn health_check() -> Json<ApiResponse<String>> {
     Json(ApiResponse::success("Service is healthy".to_string()))
 }
 
-async fn get_stats(State(store): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn get_stats(State(store): State<AppState>) -> Json<ApiResponse<(usize, usize)>> {
     let store = store.lock().await;
     let stats = store.get_stats().await;
-    Json(ApiResponse::success(serde_json::json!({
-        "review_count": stats.0,
-        "vector_count": stats.1
-    })))
+    Json(ApiResponse::success(stats))
 }
 
 async fn insert_review(
@@ -83,14 +80,17 @@ async fn search_reviews(
 
     match store.search(&request.query, request.limit.unwrap_or(10)).await {
         Ok(results) => {
-            let total_count = results.len();
+            let total_found = results.len();
             let reviews = results.into_iter()
-                .map(|(review, _score)| review)
+                .map(|(review, score)| ReviewWithScore {
+                    review,
+                    similarity_score: score,
+                })
                 .collect();
             
             let response = SearchResponse {
                 reviews,
-                total_count,
+                total_found,
             };
             
             Ok(Json(ApiResponse::success(response)))
