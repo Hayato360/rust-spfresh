@@ -57,15 +57,22 @@ impl VectorStore {
             }
         }
 
-        // If no vector file exists but we have reviews, generate vectors
-        if self.vectors.is_empty() && !self.reviews.is_empty() {
-            tracing::warn!("Vector file not found, regenerating vectors from text using FastEmbed");
+        // If vector count doesn't match review count, regenerate vectors
+        if self.vectors.len() != self.reviews.len() {
+            tracing::warn!("Vector count ({}) doesn't match review count ({}), regenerating vectors from text using FastEmbed", 
+                          self.vectors.len(), self.reviews.len());
+            
+            // Clear existing vectors
+            self.vectors.clear();
+            
+            // Generate vectors for all reviews
             for review in &self.reviews {
                 let text_to_embed = format!("{} {}", review.review_title, review.review_body);
                 let embedding = self.create_fastembed_embedding(&text_to_embed)?;
                 self.vectors.push(embedding);
             }
-            // Save the regenerated vectors
+            
+            // Save the regenerated vectors (overwrite the file)
             self.save_all_vectors_to_file().await?;
         }
 
@@ -132,6 +139,7 @@ impl VectorStore {
             .enumerate()
             .map(|(idx, vector)| {
                 let similarity = cosine_similarity(&query_vector, vector);
+                tracing::debug!("Similarity for review {}: {:.4}", idx, similarity);
                 (idx, similarity)
             })
             .collect();

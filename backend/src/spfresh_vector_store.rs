@@ -50,7 +50,7 @@ impl SPFreshVectorStore {
     }
 
     async fn load_existing_data(&self) -> Result<()> {
-        let metadata_path = format!("{}/spfresh_reviews.jsonl", self.data_dir);
+        let metadata_path = format!("{}/reviews.jsonl", self.data_dir);
         
         if !Path::new(&metadata_path).exists() {
             return Ok(());
@@ -149,7 +149,7 @@ impl SPFreshVectorStore {
         std::fs::create_dir_all(&self.data_dir)?;
 
         // Append to metadata file
-        let metadata_path = format!("{}/spfresh_reviews.jsonl", self.data_dir);
+        let metadata_path = format!("{}/reviews.jsonl", self.data_dir);
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)

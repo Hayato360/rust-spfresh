@@ -104,7 +104,7 @@ pub fn HomePage() -> impl IntoView {
                     </h3>
                     <div class="text-gray-600 space-y-2">
                         <p>"• File-based storage - no database required"</p>
-                        <p>"• Simple TF-IDF style embeddings for semantic matching"</p>
+                        // <p>"• Simple TF-IDF style embeddings for semantic matching"</p>
                         <p>"• Vector similarity search for finding related reviews"</p>
                         <p>"• Append-only data structure for persistent storage"</p>
                     </div>
@@ -355,7 +355,7 @@ pub fn SearchPage() -> impl IntoView {
                                                         <h3 class="font-semibold text-lg">{review.review_title}</h3>
                                                         <div class="text-sm">
                                                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                                                "Similarity: " {format!("{:.1}%", score * 100.0)}
+                                                                "SimilarityB: " {format!("{:.1}%", (100.0 - score * 100.0).max(0.0))}
                                                             </span>
                                                         </div>
                                                     </div>
